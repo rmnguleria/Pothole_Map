@@ -12,6 +12,9 @@ public class MeanObject {
     private float x_mean;
     private float y_mean;
     private float z_mean;
+    private float delta_x;
+    private float delta_y;
+    private float delta_z;
 
     public int getId() {
         return id;
@@ -77,11 +80,35 @@ public class MeanObject {
         this.z_mean = z_mean;
     }
 
+    public float getDelta_x() {
+        return delta_x;
+    }
+
+    public void setDelta_x(float delta_x) {
+        this.delta_x = delta_x;
+    }
+
+    public float getDelta_y() {
+        return delta_y;
+    }
+
+    public void setDelta_y(float delta_y) {
+        this.delta_y = delta_y;
+    }
+
+    public float getDelta_z() {
+        return delta_z;
+    }
+
+    public void setDelta_z(float delta_z) {
+        this.delta_z = delta_z;
+    }
+
     public MeanObject(){
 
     }
 
-    public MeanObject(int id,long timeStamp,float x_std,float y_std,float z_std,float x_mean,float y_mean,float z_mean){
+    public MeanObject(int id,long timeStamp,float x_std,float y_std,float z_std,float x_mean,float y_mean,float z_mean,float delta_x,float delta_y,float delta_z){
         this.id = id;
         this.timeStamp = timeStamp;
         this.x_std = x_std;
@@ -90,5 +117,8 @@ public class MeanObject {
         this.x_mean = x_mean;
         this.y_mean = y_mean;
         this.z_mean = z_mean;
+        this.delta_x = delta_x;
+        this.delta_y = delta_y;
+        this.delta_z = delta_z;
     }
 }
