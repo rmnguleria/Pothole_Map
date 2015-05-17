@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -48,6 +49,10 @@ public class MapsActivity extends FragmentActivity implements SensorEventListene
     private LocationManager locationManager;
     private ArrayList<LatLng> congestion;
     private ArrayList<LatLng> potholes;
+
+    TextView t1;
+    long timeStamp;
+    int idd = 0;
 
     private ArrayList<GPSData> potholesPred = new ArrayList<>();
     private ArrayList<GPSData> congestionPred = new ArrayList<>();
@@ -127,10 +132,10 @@ public class MapsActivity extends FragmentActivity implements SensorEventListene
         potholeModel = initializeModel(potholeObject);
         brakeModel = initializeModel(brakeObject);
 
-        if(potholeModel == null || brakeModel == null){
+        /*if(potholeModel == null || brakeModel == null){
             Toast.makeText(this,"Models cannot be intialized",Toast.LENGTH_LONG).show();
             System.exit(1);
-        }
+        }*/
     }
 
     public void stopDemo(View v){
@@ -144,12 +149,19 @@ public class MapsActivity extends FragmentActivity implements SensorEventListene
         for(MeanObject meanObject : meanData){
 
             // pothole Prediction .....
-            int potholePred = (int) evaluatePothole(meanObject);
+            //int potholePred = (int) evaluatePothole(meanObject);
+            int potholePred = 0;
+            Toast.makeText(getBaseContext(),meanObject.getX_std() + "," + meanObject.getY_std()+ "," + meanObject.getZ_std() + "\n",Toast.LENGTH_LONG).show();
+            //Toast.makeText(getApplicationContext(),"x_std" "z_std "+meanObject.getZ_std() ,Toast.LENGTH_LONG).show();
+            if(meanObject.getZ_std()>0.2){
+                potholePred = 1;
+            }
             if(potholePred == 1){
                 double lat = 0,longi = 0;
                 for(;gpsIter<gpsData.size();gpsIter++){
                     GPSData gpsD = gpsData.get(gpsIter);
                     if(gpsD.timeStamp > meanObject.getTimeStamp()){
+                        Toast.makeText(getApplicationContext(),"check",Toast.LENGTH_LONG).show();
                         lat = gpsD.lat;
                         longi = gpsD.longi;
                         break;
@@ -161,7 +173,9 @@ public class MapsActivity extends FragmentActivity implements SensorEventListene
             }
 
             // brake Prediction....
-            int brakePred = (int) evaluateBrake(meanObject);
+            //int brakePred = (int) evaluateBrake(meanObject);
+            int brakePred = 0;
+            Toast.makeText(getApplicationContext(),"Delta_y" + meanObject.getDelta_y(),Toast.LENGTH_LONG).show();
             if(brakePred == 1){
                 double lat = 0,longi = 0;
                 for(;gpsIter<gpsData.size();gpsIter++){
@@ -181,6 +195,10 @@ public class MapsActivity extends FragmentActivity implements SensorEventListene
     }
 
     public void combineValues(){
+        int totalValues = appData.size();
+        long duration = appData.get(totalValues-1).getTimeStamp() -appData.get(0).getTimeStamp();
+        combine = (int)((totalValues*1000)/duration);
+        Toast.makeText(getApplicationContext(),"freq:- " + combine,Toast.LENGTH_LONG).show();
         int sizeIter = appData.size() - appData.size()%combine;
         int totalSecs = sizeIter/combine;
 
@@ -188,8 +206,8 @@ public class MapsActivity extends FragmentActivity implements SensorEventListene
             long timeStamp = 0;
             float x_mean = 0,y_mean = 0,z_mean = 0 ,x_std ,y_std ,z_std, x_var = 0,y_var =0,z_var =0;
             float delta_x ,delta_y ,delta_z , max_x=-100,min_x=100,max_y=-100,min_y=100,max_z=-100,min_z=100;
-            int start = i*50;
-            int end = (i+1)*50;
+            int start = i*combine;
+            int end = (i+1)*combine;
             for (int j=start;j<end;j++){
                 // adding 50 values will divide later...
                 x_mean += appData.get(j).getX_Acc();
@@ -238,6 +256,7 @@ public class MapsActivity extends FragmentActivity implements SensorEventListene
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        t1=(TextView) findViewById(R.id.result);
         initializeGyroMatrix();
         fillCongestion();
         fillPothole();
@@ -315,7 +334,7 @@ public class MapsActivity extends FragmentActivity implements SensorEventListene
 
             // overwrite gyro matrix and orientation with fused orientation
             // to compensate for gyro drift
-            //appData.add(new DataObject())
+            appData.add(new DataObject(idd++,timeStamp,fusedOrientation[1],fusedOrientation[2],fusedOrientation[0]));
             gyroMatrix = getRotationMatrixFromOrientation(fusedOrientation);
             System.arraycopy(fusedOrientation, 0, gyroOrientation, 0, 3);
 
@@ -500,7 +519,7 @@ public class MapsActivity extends FragmentActivity implements SensorEventListene
                     .getMap();
             // Check if we were successful in obtaining the map.
             if (mMap != null) {
-                setUpMap();
+                //setUpMap();
             }
         }
     }
@@ -565,6 +584,7 @@ public class MapsActivity extends FragmentActivity implements SensorEventListene
                 // copy new accelerometer data into accel array and calculate orientation
                 System.arraycopy(sensorEvent.values, 0, accel, 0, 3);
                 calculateAccMagOrientation();
+                timeStamp = System.currentTimeMillis();
                 break;
 
             case Sensor.TYPE_GYROSCOPE:
